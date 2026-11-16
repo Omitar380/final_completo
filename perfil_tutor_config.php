@@ -20,19 +20,19 @@ $mensaje = '';
 $tipoMensaje = '';
 
 try {
-    $stmt = $pdo->prepare('SELECT biografia, tarifa_por_hora, modalidad_preferida FROM Perfiles_Tutores WHERE id_tutor = ?');
+    $stmt = $pdo->prepare('SELECT biografia, tarifa_por_hora, modalidad_preferida FROM perfiles_tutores WHERE id_tutor = ?');
     $stmt->execute([$idTutor]);
     $perfil = $stmt->fetch(PDO::FETCH_ASSOC) ?: $perfil;
 
-    $stmt = $pdo->prepare('SELECT m.nombre_materia FROM Tutores_Materias tm INNER JOIN Materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? ORDER BY m.nombre_materia');
+    $stmt = $pdo->prepare('SELECT m.nombre_materia FROM tutores_materias tm INNER JOIN materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? ORDER BY m.nombre_materia');
     $stmt->execute([$idTutor]);
     $materiasTexto = implode(', ', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-    $stmt = $pdo->prepare('SELECT m.categoria FROM Tutores_Materias tm INNER JOIN Materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? AND m.categoria IS NOT NULL AND m.categoria <> \'\' ORDER BY m.nombre_materia LIMIT 1');
+    $stmt = $pdo->prepare('SELECT m.categoria FROM tutores_materias tm INNER JOIN materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? AND m.categoria IS NOT NULL AND m.categoria <> \'\' ORDER BY m.nombre_materia LIMIT 1');
     $stmt->execute([$idTutor]);
     $categoriaMateria = $stmt->fetchColumn() ?: $categoriaMateria;
 
-    $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM Horarios_Disponibles WHERE id_tutor = ? ORDER BY id_horario');
+    $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM horarios_disponibles WHERE id_tutor = ? ORDER BY id_horario');
     $stmt->execute([$idTutor]);
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $horario) {
         $diasSeleccionados[] = $horario['dia_semana'];
@@ -77,22 +77,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare('INSERT INTO Perfiles_Tutores (id_tutor, biografia, tarifa_por_hora, modalidad_preferida) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE biografia = VALUES(biografia), tarifa_por_hora = VALUES(tarifa_por_hora), modalidad_preferida = VALUES(modalidad_preferida)');
+            $stmt = $pdo->prepare('INSERT INTO perfiles_tutores (id_tutor, biografia, tarifa_por_hora, modalidad_preferida) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE biografia = VALUES(biografia), tarifa_por_hora = VALUES(tarifa_por_hora), modalidad_preferida = VALUES(modalidad_preferida)');
             $stmt->execute([$idTutor, $perfil['biografia'], $perfil['tarifa_por_hora'], $perfil['modalidad_preferida']]);
 
-            $stmt = $pdo->prepare('DELETE FROM Tutores_Materias WHERE id_tutor = ?');
+            $stmt = $pdo->prepare('DELETE FROM tutores_materias WHERE id_tutor = ?');
             $stmt->execute([$idTutor]);
-            $stmt = $pdo->prepare("INSERT INTO Materias (nombre_materia, categoria) VALUES (?, ?) ON DUPLICATE KEY UPDATE id_materia = LAST_INSERT_ID(id_materia), categoria = IF(categoria = 'General', VALUES(categoria), categoria)");
-            $stmtRelacion = $pdo->prepare('INSERT INTO Tutores_Materias (id_tutor, id_materia) VALUES (?, ?)');
+            $stmt = $pdo->prepare("INSERT INTO materias (nombre_materia, categoria) VALUES (?, ?) ON DUPLICATE KEY UPDATE id_materia = LAST_INSERT_ID(id_materia), categoria = IF(categoria = 'General', VALUES(categoria), categoria)");
+            $stmtRelacion = $pdo->prepare('INSERT INTO tutores_materias (id_tutor, id_materia) VALUES (?, ?)');
             foreach ($materias as $materia) {
                 $stmt->execute([$materia, $categoriaMateria]);
                 $idMateria = (int) $pdo->lastInsertId();
                 $stmtRelacion->execute([$idTutor, $idMateria]);
             }
 
-            $stmt = $pdo->prepare('DELETE FROM Horarios_Disponibles WHERE id_tutor = ?');
+            $stmt = $pdo->prepare('DELETE FROM horarios_disponibles WHERE id_tutor = ?');
             $stmt->execute([$idTutor]);
-            $stmtHorario = $pdo->prepare('INSERT INTO Horarios_Disponibles (id_tutor, dia_semana, hora_inicio, hora_fin) VALUES (?, ?, ?, ?)');
+            $stmtHorario = $pdo->prepare('INSERT INTO horarios_disponibles (id_tutor, dia_semana, hora_inicio, hora_fin) VALUES (?, ?, ?, ?)');
             foreach ($diasSeleccionados as $dia) {
                 $stmtHorario->execute([$idTutor, $dia, $horaInicio . ':00', $horaFin . ':00']);
             }
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div><label for="modalidad_preferida">Modalidad</label><select id="modalidad_preferida" name="modalidad_preferida"><option value="Ambas" <?php echo $perfil['modalidad_preferida'] === 'Ambas' ? 'selected' : ''; ?>>Virtual o presencial</option><option value="Virtual" <?php echo $perfil['modalidad_preferida'] === 'Virtual' ? 'selected' : ''; ?>>Virtual</option><option value="Presencial" <?php echo $perfil['modalidad_preferida'] === 'Presencial' ? 'selected' : ''; ?>>Presencial</option></select></div>
             </div>
 
-            <label for="materias">Materias que enseñas</label>
+            <label for="materias">materias que enseñas</label>
             <input id="materias" name="materias" type="text" value="<?php echo htmlspecialchars($materiasTexto, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Matemáticas, Inglés, Programación" required>
             <small>Escribe hasta 12 materias separadas por comas.</small>
             <label for="categoria">Categoría de esas materias</label>

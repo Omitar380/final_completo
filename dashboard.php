@@ -18,40 +18,40 @@ $perfilTutor = null;
 $estadisticas = ['pendientes' => 0, 'proximas' => 0, 'resenas' => 0, 'calificacion' => 0];
 
 try {
-    $stmt = $pdo->prepare('SELECT foto_perfil FROM Usuarios WHERE id_usuario = ?');
+    $stmt = $pdo->prepare('SELECT foto_perfil FROM usuarios WHERE id_usuario = ?');
     $stmt->execute([$idUsuario]);
     $fotoPerfil = $stmt->fetchColumn() ?: null;
 
     if ($rol === 'Tutor') {
-        $stmt = $pdo->prepare('SELECT biografia, tarifa_por_hora, calificacion_promedio, modalidad_preferida FROM Perfiles_Tutores WHERE id_tutor = ?');
+        $stmt = $pdo->prepare('SELECT biografia, tarifa_por_hora, calificacion_promedio, modalidad_preferida FROM perfiles_tutores WHERE id_tutor = ?');
         $stmt->execute([$idUsuario]);
         $perfilTutor = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM Reservas_Sesiones WHERE id_tutor = ? AND estado = 'Pendiente'");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM reservas_sesiones WHERE id_tutor = ? AND estado = 'Pendiente'");
         $stmt->execute([$idUsuario]);
         $estadisticas['pendientes'] = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM Reservas_Sesiones WHERE id_tutor = ? AND estado = 'Aceptada' AND fecha_sesion >= CURDATE()");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM reservas_sesiones WHERE id_tutor = ? AND estado = 'Aceptada' AND fecha_sesion >= CURDATE()");
         $stmt->execute([$idUsuario]);
         $estadisticas['proximas'] = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT COUNT(*) AS total, COALESCE(AVG(rc.puntuacion), 0) AS calificacion FROM Resenas_Calificaciones rc INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva WHERE rs.id_tutor = ?');
+        $stmt = $pdo->prepare('SELECT COUNT(*) AS total, COALESCE(AVG(rc.puntuacion), 0) AS calificacion FROM resenas_calificaciones rc INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva WHERE rs.id_tutor = ?');
         $stmt->execute([$idUsuario]);
         $resenas = $stmt->fetch(PDO::FETCH_ASSOC);
         $estadisticas['resenas'] = (int) ($resenas['total'] ?? 0);
         $estadisticas['calificacion'] = (float) ($resenas['calificacion'] ?? 0);
     } else {
-        $stmt = $pdo->query('SELECT categoria, COUNT(*) AS total FROM Materias GROUP BY categoria ORDER BY categoria');
+        $stmt = $pdo->query('SELECT categoria, COUNT(*) AS total FROM materias GROUP BY categoria ORDER BY categoria');
         $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $stmt = $pdo->prepare("
             SELECT u.id_usuario, u.nombre, u.apellido, u.ciudad, u.foto_perfil,
                    pt.biografia, pt.tarifa_por_hora, pt.calificacion_promedio, pt.modalidad_preferida,
-                   (SELECT COUNT(*) FROM Resenas_Calificaciones rc
-                    INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva
+                   (SELECT COUNT(*) FROM resenas_calificaciones rc
+                    INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva
                     WHERE rs.id_tutor = u.id_usuario) AS total_resenas
-            FROM Usuarios u
-            INNER JOIN Perfiles_Tutores pt ON pt.id_tutor = u.id_usuario
+            FROM usuarios u
+            INNER JOIN perfiles_tutores pt ON pt.id_tutor = u.id_usuario
             WHERE u.rol = 'Tutor'
             ORDER BY pt.calificacion_promedio DESC, u.nombre
             LIMIT 6

@@ -22,12 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             if ($nuevoEstado === 'Completada') {
-                $stmt = $pdo->prepare("UPDATE Reservas_Sesiones SET estado = 'Completada'
+                $stmt = $pdo->prepare("UPDATE reservas_sesiones SET estado = 'Completada'
                     WHERE id_reserva = ? AND id_tutor = ? AND estado = 'Aceptada'
                     AND (fecha_sesion < CURDATE() OR (fecha_sesion = CURDATE() AND hora_fin <= CURTIME()))");
                 $stmt->execute([$idReserva, $idTutor]);
             } else {
-                $stmt = $pdo->prepare("UPDATE Reservas_Sesiones SET estado = ? WHERE id_reserva = ? AND id_tutor = ? AND estado = 'Pendiente'");
+                $stmt = $pdo->prepare("UPDATE reservas_sesiones SET estado = ? WHERE id_reserva = ? AND id_tutor = ? AND estado = 'Pendiente'");
                 $stmt->execute([$nuevoEstado, $idReserva, $idTutor]);
             }
             if ($stmt->rowCount() === 1) {
@@ -50,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 try {
     $stmt = $pdo->prepare("SELECT rs.id_reserva, rs.fecha_sesion, rs.hora_inicio, rs.hora_fin, rs.modalidad, rs.estado,
             m.nombre_materia, u.nombre AS nombre_estudiante, u.apellido AS apellido_estudiante
-        FROM Reservas_Sesiones rs
-        INNER JOIN Materias m ON m.id_materia = rs.id_materia
-        INNER JOIN Usuarios u ON u.id_usuario = rs.id_estudiante
+        FROM reservas_sesiones rs
+        INNER JOIN materias m ON m.id_materia = rs.id_materia
+        INNER JOIN usuarios u ON u.id_usuario = rs.id_estudiante
         WHERE rs.id_tutor = ?
         ORDER BY (rs.estado = 'Pendiente') DESC, rs.fecha_sesion DESC, rs.hora_inicio");
     $stmt->execute([$idTutor]);

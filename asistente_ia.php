@@ -66,11 +66,11 @@ $errorDatosLocales = '';
 
 try {
     if ($rolUsuario === 'Estudiante') {
-        $stmt = $pdo->prepare('SELECT nivel_academico, presupuesto_maximo FROM Preferencias_Estudiantes WHERE id_estudiante = ?');
+        $stmt = $pdo->prepare('SELECT nivel_academico, presupuesto_maximo FROM preferencias_estudiantes WHERE id_estudiante = ?');
         $stmt->execute([$idUsuario]);
         $preferenciasEstudiante = $stmt->fetch(PDO::FETCH_ASSOC) ?: $preferenciasEstudiante;
 
-        $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM Disponibilidad_Estudiantes WHERE id_estudiante = ? ORDER BY id_disponibilidad');
+        $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM disponibilidad_estudiantes WHERE id_estudiante = ? ORDER BY id_disponibilidad');
         $stmt->execute([$idUsuario]);
         $horariosEstudiante = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -83,16 +83,16 @@ try {
                    COALESCE(resenas.total_resenas, 0) AS total_resenas,
                    COALESCE(resenas.calificacion_real, 0) AS calificacion_real,
                    COALESCE(resenas.resenas_positivas, 0) AS resenas_positivas
-            FROM Usuarios u
-            INNER JOIN Perfiles_Tutores pt ON pt.id_tutor = u.id_usuario
-            LEFT JOIN Tutores_Materias tm ON tm.id_tutor = u.id_usuario
-            LEFT JOIN Materias m ON m.id_materia = tm.id_materia
+            FROM usuarios u
+            INNER JOIN perfiles_tutores pt ON pt.id_tutor = u.id_usuario
+            LEFT JOIN tutores_materias tm ON tm.id_tutor = u.id_usuario
+            LEFT JOIN materias m ON m.id_materia = tm.id_materia
             LEFT JOIN (
                 SELECT rs.id_tutor, COUNT(*) AS total_resenas,
                        AVG(rc.puntuacion) AS calificacion_real,
                        SUM(CASE WHEN rc.puntuacion >= 4 THEN 1 ELSE 0 END) AS resenas_positivas
-                FROM Resenas_Calificaciones rc
-                INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva
+                FROM resenas_calificaciones rc
+                INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva
                 GROUP BY rs.id_tutor
             ) resenas ON resenas.id_tutor = u.id_usuario
             WHERE u.rol = 'Tutor'
@@ -106,7 +106,7 @@ try {
 
         $stmt = $pdo->query("
             SELECT id_tutor, dia_semana, hora_inicio, hora_fin
-            FROM Horarios_Disponibles
+            FROM horarios_disponibles
             ORDER BY id_tutor, id_horario
         ");
         $horariosPorTutor = [];
@@ -116,7 +116,7 @@ try {
 
         $stmt = $pdo->query("
             SELECT categoria, COUNT(DISTINCT id_materia) AS total
-            FROM Materias
+            FROM materias
             WHERE categoria IS NOT NULL AND categoria <> ''
             GROUP BY categoria
             ORDER BY categoria
@@ -127,10 +127,10 @@ try {
             SELECT rs.fecha_sesion, rs.hora_inicio, rs.hora_fin, rs.modalidad, rs.estado,
                    m.nombre_materia, t.nombre AS nombre_tutor, t.apellido AS apellido_tutor,
                    rc.puntuacion AS mi_calificacion
-            FROM Reservas_Sesiones rs
-            INNER JOIN Materias m ON m.id_materia = rs.id_materia
-            INNER JOIN Usuarios t ON t.id_usuario = rs.id_tutor
-            LEFT JOIN Resenas_Calificaciones rc ON rc.id_reserva = rs.id_reserva
+            FROM reservas_sesiones rs
+            INNER JOIN materias m ON m.id_materia = rs.id_materia
+            INNER JOIN usuarios t ON t.id_usuario = rs.id_tutor
+            LEFT JOIN resenas_calificaciones rc ON rc.id_reserva = rs.id_reserva
             WHERE rs.id_estudiante = ?
             ORDER BY rs.fecha_sesion DESC, rs.hora_inicio DESC
             LIMIT 30
@@ -141,8 +141,8 @@ try {
         $stmt = $pdo->prepare("
             SELECT u.nombre, u.apellido, u.ciudad, pt.biografia,
                    pt.tarifa_por_hora, pt.calificacion_promedio, pt.modalidad_preferida
-            FROM Usuarios u
-            INNER JOIN Perfiles_Tutores pt ON pt.id_tutor = u.id_usuario
+            FROM usuarios u
+            INNER JOIN perfiles_tutores pt ON pt.id_tutor = u.id_usuario
             WHERE u.id_usuario = ? AND u.rol = 'Tutor'
         ");
         $stmt->execute([$idUsuario]);
@@ -150,8 +150,8 @@ try {
 
         $stmt = $pdo->prepare("
             SELECT m.nombre_materia, m.categoria
-            FROM Tutores_Materias tm
-            INNER JOIN Materias m ON m.id_materia = tm.id_materia
+            FROM tutores_materias tm
+            INNER JOIN materias m ON m.id_materia = tm.id_materia
             WHERE tm.id_tutor = ?
             ORDER BY m.nombre_materia
         ");
@@ -160,7 +160,7 @@ try {
 
         $stmt = $pdo->prepare("
             SELECT dia_semana, hora_inicio, hora_fin
-            FROM Horarios_Disponibles
+            FROM horarios_disponibles
             WHERE id_tutor = ?
             ORDER BY id_horario
         ");
@@ -170,8 +170,8 @@ try {
         $stmt = $pdo->prepare("
             SELECT rs.fecha_sesion, rs.hora_inicio, rs.hora_fin, rs.modalidad,
                    rs.estado, m.nombre_materia
-            FROM Reservas_Sesiones rs
-            INNER JOIN Materias m ON m.id_materia = rs.id_materia
+            FROM reservas_sesiones rs
+            INNER JOIN materias m ON m.id_materia = rs.id_materia
             WHERE rs.id_tutor = ?
             ORDER BY rs.fecha_sesion DESC, rs.hora_inicio DESC
             LIMIT 50
@@ -182,8 +182,8 @@ try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) AS total_resenas, COALESCE(AVG(rc.puntuacion), 0) AS promedio,
                    COALESCE(SUM(CASE WHEN rc.puntuacion >= 4 THEN 1 ELSE 0 END), 0) AS positivas
-            FROM Resenas_Calificaciones rc
-            INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva
+            FROM resenas_calificaciones rc
+            INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva
             WHERE rs.id_tutor = ?
         ");
         $stmt->execute([$idUsuario]);
@@ -230,7 +230,7 @@ $responderLocalmente = static function ($mensaje) use (
             '- Biografía: ' . ($perfilTutorPropio['biografia'] ?: 'sin biografía'),
             '- Tarifa: $' . number_format((float) $perfilTutorPropio['tarifa_por_hora'], 2) . ' por hora',
             '- Modalidad: ' . $perfilTutorPropio['modalidad_preferida'],
-            '- Materias: ' . ($materiasTutorPropio
+            '- materias: ' . ($materiasTutorPropio
                 ? implode(', ', array_column($materiasTutorPropio, 'nombre_materia'))
                 : 'sin materias registradas'),
             '- Horarios publicados: ' . ($horariosTutorPropio
@@ -608,7 +608,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $pdo->beginTransaction();
                 $stmt = $pdo->prepare("
-                    INSERT INTO Preferencias_Estudiantes (id_estudiante, nivel_academico, presupuesto_maximo)
+                    INSERT INTO preferencias_estudiantes (id_estudiante, nivel_academico, presupuesto_maximo)
                     VALUES (?, ?, ?)
                     ON DUPLICATE KEY UPDATE nivel_academico = VALUES(nivel_academico),
                                             presupuesto_maximo = VALUES(presupuesto_maximo)
@@ -619,11 +619,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $presupuestoMaximo !== '' ? (float) $presupuestoMaximo : null,
                 ]);
 
-                $stmt = $pdo->prepare('DELETE FROM Disponibilidad_Estudiantes WHERE id_estudiante = ?');
+                $stmt = $pdo->prepare('DELETE FROM disponibilidad_estudiantes WHERE id_estudiante = ?');
                 $stmt->execute([$idUsuario]);
                 if ($diasPreferidos) {
                     $stmt = $pdo->prepare("
-                        INSERT INTO Disponibilidad_Estudiantes (id_estudiante, dia_semana, hora_inicio, hora_fin)
+                        INSERT INTO disponibilidad_estudiantes (id_estudiante, dia_semana, hora_inicio, hora_fin)
                         VALUES (?, ?, ?, ?)
                     ");
                     foreach ($diasPreferidos as $diaPreferido) {

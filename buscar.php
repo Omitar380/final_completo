@@ -17,20 +17,20 @@ $materias = [];
 $errorPagina = '';
 
 try {
-    $stmt = $pdo->query('SELECT DISTINCT categoria FROM Materias WHERE categoria IS NOT NULL AND categoria <> \'\' ORDER BY categoria');
+    $stmt = $pdo->query('SELECT DISTINCT categoria FROM materias WHERE categoria IS NOT NULL AND categoria <> \'\' ORDER BY categoria');
     $materias = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     $sql = "
         SELECT u.id_usuario, u.nombre, u.apellido, u.ciudad, u.foto_perfil,
                pt.biografia, pt.tarifa_por_hora, pt.calificacion_promedio, pt.modalidad_preferida,
                GROUP_CONCAT(DISTINCT m.nombre_materia ORDER BY m.nombre_materia SEPARATOR ', ') AS materias,
-               (SELECT COUNT(*) FROM Resenas_Calificaciones rc
-                INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva
+               (SELECT COUNT(*) FROM resenas_calificaciones rc
+                INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva
                 WHERE rs.id_tutor = u.id_usuario) AS total_resenas
-        FROM Usuarios u
-        INNER JOIN Perfiles_Tutores pt ON pt.id_tutor = u.id_usuario
-        LEFT JOIN Tutores_Materias tm ON tm.id_tutor = u.id_usuario
-        LEFT JOIN Materias m ON m.id_materia = tm.id_materia
+        FROM usuarios u
+        INNER JOIN perfiles_tutores pt ON pt.id_tutor = u.id_usuario
+        LEFT JOIN tutores_materias tm ON tm.id_tutor = u.id_usuario
+        LEFT JOIN materias m ON m.id_materia = tm.id_materia
         WHERE u.rol = 'Tutor'
     ";
     $parametros = [];
@@ -114,7 +114,7 @@ try {
                                 <h3><?php echo htmlspecialchars($tutor['nombre'] . ' ' . $tutor['apellido'], ENT_QUOTES, 'UTF-8'); ?></h3>
                                 <p class="tutor-city"><?php echo htmlspecialchars($tutor['ciudad'] ?: 'Ubicación no indicada', ENT_QUOTES, 'UTF-8'); ?> · <?php echo htmlspecialchars($tutor['modalidad_preferida'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 <p class="tutor-bio"><?php echo htmlspecialchars($tutor['biografia'] ?: 'Este tutor aún no ha agregado una biografía.', ENT_QUOTES, 'UTF-8'); ?></p>
-                                <p class="tutor-city">Materias: <?php echo htmlspecialchars($tutor['materias'] ?: 'Por definir', ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="tutor-city">materias: <?php echo htmlspecialchars($tutor['materias'] ?: 'Por definir', ENT_QUOTES, 'UTF-8'); ?></p>
                                 <div class="tutor-card-footer"><strong>$<?php echo number_format((float) $tutor['tarifa_por_hora'], 2); ?><small> / hora</small></strong><a class="button button--primary" href="perfil_tutor.php?id=<?php echo (int) $tutor['id_usuario']; ?>">Ver perfil</a></div>
                             </article>
                         <?php endforeach; ?>

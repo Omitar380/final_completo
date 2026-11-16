@@ -17,24 +17,24 @@ $errorPagina = '';
 if ($idTutor) {
     try {
         $stmt = $pdo->prepare("SELECT u.id_usuario, u.nombre, u.apellido, u.ciudad, u.foto_perfil, pt.biografia, pt.tarifa_por_hora, pt.calificacion_promedio, pt.modalidad_preferida
-            FROM Usuarios u INNER JOIN Perfiles_Tutores pt ON pt.id_tutor = u.id_usuario
+            FROM usuarios u INNER JOIN perfiles_tutores pt ON pt.id_tutor = u.id_usuario
             WHERE u.id_usuario = ? AND u.rol = 'Tutor'");
         $stmt->execute([$idTutor]);
         $tutor = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         if ($tutor) {
-            $stmt = $pdo->prepare('SELECT m.nombre_materia, m.categoria FROM Tutores_Materias tm INNER JOIN Materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? ORDER BY m.nombre_materia');
+            $stmt = $pdo->prepare('SELECT m.nombre_materia, m.categoria FROM tutores_materias tm INNER JOIN materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? ORDER BY m.nombre_materia');
             $stmt->execute([$idTutor]);
             $materias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM Horarios_Disponibles WHERE id_tutor = ? ORDER BY FIELD(dia_semana, \'Lunes\', \'Martes\', \'Miércoles\', \'Jueves\', \'Viernes\', \'Sábado\', \'Domingo\')');
+            $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM horarios_disponibles WHERE id_tutor = ? ORDER BY FIELD(dia_semana, \'Lunes\', \'Martes\', \'Miércoles\', \'Jueves\', \'Viernes\', \'Sábado\', \'Domingo\')');
             $stmt->execute([$idTutor]);
             $horarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $stmt = $pdo->prepare('SELECT rc.puntuacion, rc.comentario, rc.fecha_creacion, u.nombre, u.apellido
-                FROM Resenas_Calificaciones rc
-                INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva
-                INNER JOIN Usuarios u ON u.id_usuario = rs.id_estudiante
+                FROM resenas_calificaciones rc
+                INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva
+                INNER JOIN usuarios u ON u.id_usuario = rs.id_estudiante
                 WHERE rs.id_tutor = ?
                 ORDER BY rc.fecha_creacion DESC LIMIT 10');
             $stmt->execute([$idTutor]);
@@ -77,7 +77,7 @@ if ($idTutor) {
             </section>
 
             <section class="public-profile-section">
-                <h2>Materias que enseño</h2>
+                <h2>materias que enseño</h2>
                 <?php if ($materias): ?>
                     <div class="subject-pills"><?php foreach ($materias as $materia): ?><span><?php echo htmlspecialchars($materia['nombre_materia'], ENT_QUOTES, 'UTF-8'); ?></span><?php endforeach; ?></div>
                 <?php else: ?>

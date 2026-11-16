@@ -17,7 +17,7 @@ if (!isset($_SESSION['perfil_csrf'])) {
     $_SESSION['perfil_csrf'] = bin2hex(random_bytes(32));
 }
 
-$stmt = $pdo->prepare('SELECT foto_perfil FROM Usuarios WHERE id_usuario = ?');
+$stmt = $pdo->prepare('SELECT foto_perfil FROM usuarios WHERE id_usuario = ?');
 $stmt->execute([$idUsuario]);
 $fotoPerfil = $stmt->fetchColumn() ?: null;
 
@@ -76,11 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $tipoMensaje = 'error';
                     } elseif ($esFoto) {
                         try {
-                            $stmt = $pdo->prepare('UPDATE Usuarios SET foto_perfil = ? WHERE id_usuario = ?');
+                            $stmt = $pdo->prepare('UPDATE usuarios SET foto_perfil = ? WHERE id_usuario = ?');
                             $stmt->execute([$rutaPublica, $idUsuario]);
 
                             if ($stmt->rowCount() === 0) {
-                                $stmt = $pdo->prepare('SELECT foto_perfil FROM Usuarios WHERE id_usuario = ?');
+                                $stmt = $pdo->prepare('SELECT foto_perfil FROM usuarios WHERE id_usuario = ?');
                                 $stmt->execute([$idUsuario]);
                                 if ($stmt->fetchColumn() === false) {
                                     throw new RuntimeException('No se encontró la cuenta para asociar la foto.');

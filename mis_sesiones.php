@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tipoMensaje = 'error';
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT id_tutor FROM Reservas_Sesiones WHERE id_reserva = ? AND id_estudiante = ? AND estado = 'Completada'");
+            $stmt = $pdo->prepare("SELECT id_tutor FROM reservas_sesiones WHERE id_reserva = ? AND id_estudiante = ? AND estado = 'Completada'");
             $stmt->execute([$idReserva, $idEstudiante]);
             $idTutor = $stmt->fetchColumn();
             if (!$idTutor) {
@@ -29,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tipoMensaje = 'error';
             } else {
                 $pdo->beginTransaction();
-                $stmt = $pdo->prepare('INSERT INTO Resenas_Calificaciones (id_reserva, puntuacion, comentario) VALUES (?, ?, ?)');
+                $stmt = $pdo->prepare('INSERT INTO resenas_calificaciones (id_reserva, puntuacion, comentario) VALUES (?, ?, ?)');
                 $stmt->execute([$idReserva, $puntuacion, $comentario]);
-                $stmt = $pdo->prepare('UPDATE Perfiles_Tutores SET calificacion_promedio = (SELECT AVG(rc.puntuacion) FROM Resenas_Calificaciones rc INNER JOIN Reservas_Sesiones rs ON rs.id_reserva = rc.id_reserva WHERE rs.id_tutor = ?) WHERE id_tutor = ?');
+                $stmt = $pdo->prepare('UPDATE perfiles_tutores SET calificacion_promedio = (SELECT AVG(rc.puntuacion) FROM resenas_calificaciones rc INNER JOIN reservas_sesiones rs ON rs.id_reserva = rc.id_reserva WHERE rs.id_tutor = ?) WHERE id_tutor = ?');
                 $stmt->execute([$idTutor, $idTutor]);
                 $pdo->commit();
                 $mensaje = 'Gracias por compartir tu opinión.';
@@ -55,10 +55,10 @@ try {
     $stmt = $pdo->prepare('SELECT rs.id_reserva, rs.fecha_sesion, rs.hora_inicio, rs.hora_fin, rs.modalidad, rs.enlace_videoconferencia, rs.estado,
             m.nombre_materia, t.id_usuario AS id_tutor, t.nombre AS nombre_tutor, t.apellido AS apellido_tutor,
             rc.puntuacion AS mi_puntuacion
-        FROM Reservas_Sesiones rs
-        INNER JOIN Materias m ON m.id_materia = rs.id_materia
-        INNER JOIN Usuarios t ON t.id_usuario = rs.id_tutor
-        LEFT JOIN Resenas_Calificaciones rc ON rc.id_reserva = rs.id_reserva
+        FROM reservas_sesiones rs
+        INNER JOIN materias m ON m.id_materia = rs.id_materia
+        INNER JOIN usuarios t ON t.id_usuario = rs.id_tutor
+        LEFT JOIN resenas_calificaciones rc ON rc.id_reserva = rs.id_reserva
         WHERE rs.id_estudiante = ?
         ORDER BY rs.fecha_sesion DESC, rs.hora_inicio DESC');
     $stmt->execute([$idEstudiante]);

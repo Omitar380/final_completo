@@ -19,17 +19,17 @@ $errorPagina = '';
 if ($idTutor) {
     try {
         $stmt = $pdo->prepare("SELECT u.nombre, u.apellido, pt.tarifa_por_hora, pt.modalidad_preferida
-            FROM Usuarios u INNER JOIN Perfiles_Tutores pt ON pt.id_tutor = u.id_usuario
+            FROM usuarios u INNER JOIN perfiles_tutores pt ON pt.id_tutor = u.id_usuario
             WHERE u.id_usuario = ? AND u.rol = 'Tutor'");
         $stmt->execute([$idTutor]);
         $tutor = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         if ($tutor) {
-            $stmt = $pdo->prepare('SELECT m.id_materia, m.nombre_materia FROM Tutores_Materias tm INNER JOIN Materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? ORDER BY m.nombre_materia');
+            $stmt = $pdo->prepare('SELECT m.id_materia, m.nombre_materia FROM tutores_materias tm INNER JOIN materias m ON m.id_materia = tm.id_materia WHERE tm.id_tutor = ? ORDER BY m.nombre_materia');
             $stmt->execute([$idTutor]);
             $materias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM Horarios_Disponibles WHERE id_tutor = ?');
+            $stmt = $pdo->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM horarios_disponibles WHERE id_tutor = ?');
             $stmt->execute([$idTutor]);
             $horarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $errorPagina === '' && $tutor) {
             $tipoMensaje = 'error';
         } else {
             try {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM Reservas_Sesiones
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM reservas_sesiones
                     WHERE id_tutor = ? AND fecha_sesion = ?
                     AND estado NOT IN ('Rechazada', 'Cancelada')
                     AND hora_inicio < ? AND hora_fin > ?");
@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $errorPagina === '' && $tutor) {
                     $mensaje = 'Ese horario ya tiene una solicitud o reserva. Selecciona otra hora.';
                     $tipoMensaje = 'error';
                 } else {
-                    $stmt = $pdo->prepare("INSERT INTO Reservas_Sesiones (id_estudiante, id_tutor, id_materia, fecha_sesion, hora_inicio, hora_fin, modalidad, estado)
+                    $stmt = $pdo->prepare("INSERT INTO reservas_sesiones (id_estudiante, id_tutor, id_materia, fecha_sesion, hora_inicio, hora_fin, modalidad, estado)
                         VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente')");
                     $stmt->execute([$idEstudiante, $idTutor, $idMateria, $fecha, $horaInicio . ':00', $horaFin, $modalidad]);
                     $mensaje = 'Solicitud enviada. Podrás ver el estado en Mis sesiones.';

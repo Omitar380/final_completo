@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare('INSERT INTO Usuarios (nombre, apellido, email, password_hash, rol, ciudad) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt = $pdo->prepare('INSERT INTO usuarios (nombre, apellido, email, password_hash, rol, ciudad) VALUES (?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $datos['nombre'],
                 $datos['apellido'],
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $idUsuario = (int) $pdo->lastInsertId();
 
             if ($datos['rol'] === 'Tutor') {
-                $stmt = $pdo->prepare('INSERT INTO Perfiles_Tutores (id_tutor, biografia, tarifa_por_hora, modalidad_preferida) VALUES (?, ?, ?, ?)');
+                $stmt = $pdo->prepare('INSERT INTO perfiles_tutores (id_tutor, biografia, tarifa_por_hora, modalidad_preferida) VALUES (?, ?, ?, ?)');
                 $stmt->execute([
                     $idUsuario,
                     $datos['biografia'],
